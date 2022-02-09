@@ -72,7 +72,11 @@ const handshake = new Postmate({
   url: 'http://child.com/page.html', // Page to load, must have postmate.js. This will also be the origin used for communication.
   name: 'my-iframe-name', // Set Iframe name attribute. Useful to get `window.name` in the child.
   classListArray: ["myClass"], //Classes to add to the iframe via classList, useful for styling.
-  maxHandshakeRequests: 10 // (optional) defaults to 5
+  {
+    // handshakeConfig
+    maxHandshakeRequests: 10, // (optional) defaults to 5 - The maximum number of attempts to send a handshake request to the parent
+    handshakeIntervalMs: 1000, // (optional) defaults to 500 - The number of milliseconds between each handshake request to the parent
+  } 
 });
 
 // When parent <-> child handshake is complete, data may be requested from the child
