@@ -12,6 +12,21 @@ export const messageType = 'application/x-postmate-v1+json'
 export const maxHandshakeRequests = 5
 
 /**
+ * The number of milliseconds between each handshake request to the parent
+ * @type {Number}
+ */
+export const handshakeIntervalMs = 500;
+
+/**
+ * Postmate's handshake config, this config can be overridden using the Postmate constructor
+ * @param  {Object} ...args Rest Arguments
+ */
+export const defaultHandshakeConfig = {
+  maxHandshakeRequests,
+  handshakeIntervalMs,
+};
+
+/**
  * A unique message ID that is used to ensure responses are sent to the correct requests
  * @type {Number}
  */
@@ -266,7 +281,7 @@ class Postmate {
     url,
     name,
     classListArray = [],
-    maxHandshakeRequests = maxHandshakeRequests,
+    handshakeConfig = defaultHandshakeConfig
   }) { // eslint-disable-line no-undef
     this.parent = window
     this.frame = document.createElement('iframe')
@@ -276,6 +291,7 @@ class Postmate {
     this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow
     this.model = model || {}
     this.maxHandshakeRequests = maxHandshakeRequests;
+    this.handshakeConfig = Object.assign({}, defaultHandshakeConfig, handshakeConfig);
 
     return this.sendHandshake(url)
   }
@@ -326,7 +342,7 @@ class Postmate {
           model: this.model,
         }, childOrigin)
 
-        if (attempt === this.maxHandshakeRequests) {
+        if (attempt === this.handshakeConfig.maxHandshakeRequests) {
           clearInterval(responseInterval)
           reject('Parent: Max attempts reached');
         }
@@ -334,7 +350,7 @@ class Postmate {
 
       const loaded = () => {
         doSend()
-        responseInterval = setInterval(doSend, 500)
+        responseInterval = setInterval(doSend, this.handshakeConfig.handshakeIntervalMs);
       }
 
       if (this.frame.attachEvent) {

@@ -138,5 +138,5 @@ describe('postmate', function () {
         done()
       }).catch(function (err) { done(err) })
     })
-  })
+  });
 })
