@@ -266,6 +266,7 @@ class Postmate {
     url,
     name,
     classListArray = [],
+    maxHandshakeRequests = maxHandshakeRequests,
   }) { // eslint-disable-line no-undef
     this.parent = window
     this.frame = document.createElement('iframe')
@@ -274,6 +275,7 @@ class Postmate {
     container.appendChild(this.frame)
     this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow
     this.model = model || {}
+    this.maxHandshakeRequests = maxHandshakeRequests;
 
     return this.sendHandshake(url)
   }
@@ -324,8 +326,9 @@ class Postmate {
           model: this.model,
         }, childOrigin)
 
-        if (attempt === maxHandshakeRequests) {
+        if (attempt === this.maxHandshakeRequests) {
           clearInterval(responseInterval)
+          reject('Parent: Max attempts reached');
         }
       }
 
