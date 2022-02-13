@@ -1,4 +1,4 @@
-export const retryEvery = async (asyncFunc, { interval = 500, maxAttempts = 2} = {}) => {
+export const retryEvery = async (asyncFunc, { interval = 500, maxAttempts = 1} = {}) => {
     try {
         const asyncFuncResult = await asyncFunc();
         return asyncFuncResult;
