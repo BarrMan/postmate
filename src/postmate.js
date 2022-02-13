@@ -1,5 +1,3 @@
-import { retryEvery } from './utils';
-
 /**
  * The type of messages our frames our sending
  * @type {String}
