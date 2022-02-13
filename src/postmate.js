@@ -276,7 +276,7 @@ class Postmate {
     url,
     name,
     classListArray = [],
-    options,
+    options = {},
   }) { // eslint-disable-line no-undef
     this.parent = window
     this.frame = document.createElement('iframe')
