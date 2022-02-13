@@ -379,7 +379,7 @@ Postmate.Model = class Model {
    * @return {Promise} Resolves an object that exposes an API for the Child
    */
   sendHandshakeReply (retryOptions) {
-    return new Postmate.Promise((resolve, reject) => {
+    return retryEvery(() => new Postmate.Promise((resolve, reject) => {
       const shake = (e) => {
         if (!e.data.postmate) {
           return;
@@ -414,10 +414,8 @@ Postmate.Model = class Model {
         }
         return reject('Handshake Reply Failed')
       }
-      this.child.addEventListener('message', (e) => {
-        retryEvery(() => shake(e), retryOptions)
-      }, false);
-    })
+      this.child.addEventListener('message', shake, false);
+    }), retryOptions);
   }
 }
 
