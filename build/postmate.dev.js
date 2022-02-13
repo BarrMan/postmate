@@ -1,8 +1,8 @@
 /**
-  postmate - A powerful, simple, promise-based postMessage library
+  @barrman/postmate - A powerful, simple, promise-based postMessage library
   @version v1.6.0
-  @link https://github.com/dollarshaveclub/postmate
-  @author Jacob Kelley <jakie8@gmail.com>
+  @link https://github.com/BarrMan/postmate
+  @author Imri Barr <emree3@gmail.com>
   @license MIT
 **/
 (function (global, factory) {
@@ -22,6 +22,21 @@
    */
 
   var maxHandshakeRequests = 5;
+  /**
+   * The number of milliseconds between each handshake request to the parent
+   * @type {Number}
+   */
+
+  var handshakeIntervalMs = 500;
+  /**
+   * Postmate's handshake config, this config can be overridden using the Postmate constructor
+   * @param  {Object} ...args Rest Arguments
+   */
+
+  var defaultHandshakeConfig = {
+    maxHandshakeRequests: maxHandshakeRequests,
+    handshakeIntervalMs: handshakeIntervalMs
+  };
   /**
    * A unique message ID that is used to ensure responses are sent to the correct requests
    * @type {Number}
@@ -67,14 +82,14 @@
     emit: 1,
     reply: 1,
     request: 1
-    /**
-     * Ensures that a message is safe to interpret
-     * @param  {Object} message The postmate message being sent
-     * @param  {String|Boolean} allowedOrigin The whitelisted origin or false to skip origin check
-     * @return {Boolean}
-     */
-
   };
+  /**
+   * Ensures that a message is safe to interpret
+   * @param  {Object} message The postmate message being sent
+   * @param  {String|Boolean} allowedOrigin The whitelisted origin or false to skip origin check
+   * @return {Boolean}
+   */
+
   var sanitize = function sanitize(message, allowedOrigin) {
     if (typeof allowedOrigin === 'string' && message.origin !== allowedOrigin) return false;
     if (!message.data) return false;
@@ -101,9 +116,7 @@
    * @param {Object} info Information on the consumer
    */
 
-  var ParentAPI =
-  /*#__PURE__*/
-  function () {
+  var ParentAPI = /*#__PURE__*/function () {
     function ParentAPI(info) {
       var _this = this;
 
@@ -212,9 +225,7 @@
    * @param {Object} info Information on the consumer
    */
 
-  var ChildAPI =
-  /*#__PURE__*/
-  function () {
+  var ChildAPI = /*#__PURE__*/function () {
     function ChildAPI(info) {
       var _this3 = this;
 
@@ -285,9 +296,7 @@
    * @type {Class}
    */
 
-  var Postmate =
-  /*#__PURE__*/
-  function () {
+  var Postmate = /*#__PURE__*/function () {
     // eslint-disable-line no-undef
     // Internet Explorer craps itself
 
@@ -303,7 +312,9 @@
           url = _ref2.url,
           name = _ref2.name,
           _ref2$classListArray = _ref2.classListArray,
-          classListArray = _ref2$classListArray === void 0 ? [] : _ref2$classListArray;
+          classListArray = _ref2$classListArray === void 0 ? [] : _ref2$classListArray,
+          _ref2$handshakeConfig = _ref2.handshakeConfig,
+          handshakeConfig = _ref2$handshakeConfig === void 0 ? defaultHandshakeConfig : _ref2$handshakeConfig;
       // eslint-disable-line no-undef
       this.parent = window;
       this.frame = document.createElement('iframe');
@@ -312,6 +323,8 @@
       container.appendChild(this.frame);
       this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow;
       this.model = model || {};
+      this.maxHandshakeRequests = maxHandshakeRequests;
+      this.handshakeConfig = Object.assign({}, defaultHandshakeConfig, handshakeConfig);
       return this.sendHandshake(url);
     }
     /**
@@ -377,14 +390,15 @@
             model: _this4.model
           }, childOrigin);
 
-          if (attempt === maxHandshakeRequests) {
+          if (attempt === _this4.handshakeConfig.maxHandshakeRequests) {
             clearInterval(responseInterval);
+            reject('Parent: Max attempts reached');
           }
         };
 
         var loaded = function loaded() {
           doSend();
-          responseInterval = setInterval(doSend, 500);
+          responseInterval = setInterval(doSend, _this4.handshakeConfig.handshakeIntervalMs);
         };
 
         if (_this4.frame.attachEvent) {
@@ -421,9 +435,7 @@
     }
   }();
 
-  Postmate.Model =
-  /*#__PURE__*/
-  function () {
+  Postmate.Model = /*#__PURE__*/function () {
     /**
      * Initializes the child, model, parent, and responds to the Parents handshake
      * @param {Object} model Hash of values, functions, or promises

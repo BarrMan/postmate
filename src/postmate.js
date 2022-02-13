@@ -320,13 +320,6 @@ class Postmate {
           }
           return resolve(new ParentAPI(this))
         }
-
-        // Might need to remove since parent might be receiving different messages
-        // from different hosts
-        if (process.env.NODE_ENV !== 'production') {
-          log('Parent: Invalid handshake reply')
-        }
-        return reject('Failed handshake')
       }
 
       this.parent.addEventListener('message', reply, false)
