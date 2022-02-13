@@ -276,7 +276,7 @@ class Postmate {
     url,
     name,
     classListArray = [],
-    options = {},
+    handshakeConfig = defaultHandshakeConfig
   }) { // eslint-disable-line no-undef
     this.parent = window
     this.frame = document.createElement('iframe')
@@ -285,11 +285,10 @@ class Postmate {
     container.appendChild(this.frame)
     this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow
     this.model = model || {}
-    const { handshakeConfig, retryOptions } = options;
     this.maxHandshakeRequests = maxHandshakeRequests;
     this.handshakeConfig = Object.assign({}, defaultHandshakeConfig, handshakeConfig);
 
-    return retryEvery(() => this.sendHandshake(url), retryOptions);
+    return this.sendHandshake(url)
   }
 
   /**
@@ -365,21 +364,20 @@ Postmate.Model = class Model {
    * @param {Object} model Hash of values, functions, or promises
    * @return {Promise}       The Promise that resolves when the handshake has been received
    */
-  constructor (model, options = {}) {
-    const { retryOptions = {} } = options;
+  constructor (model) {
     this.child = window;
     this.model = model;
     this.parent = this.child.parent;
 
-    return this.sendHandshakeReply(retryOptions);
+    return this.sendHandshakeReply();
   }
 
   /**
    * Responds to a handshake initiated by the Parent
    * @return {Promise} Resolves an object that exposes an API for the Child
    */
-  sendHandshakeReply (retryOptions) {
-    return retryEvery(() => new Postmate.Promise((resolve, reject) => {
+  sendHandshakeReply () {
+    return new Postmate.Promise((resolve, reject) => {
       const shake = (e) => {
         if (!e.data.postmate) {
           return;
@@ -415,7 +413,7 @@ Postmate.Model = class Model {
         return reject('Handshake Reply Failed')
       }
       this.child.addEventListener('message', shake, false);
-    }), retryOptions);
+    })
   }
 }
 
