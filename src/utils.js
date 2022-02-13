@@ -1,31 +1,15 @@
-export const delay = function(delayMs) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, delayMs);
+export const wait = ms => new Promise(r => setTimeout(r, ms));
+
+export const retryEvery = (asyncFn, { interval = 500, maxAttempts = 1 } = {}) => new Promise((resolve, reject) => {
+  return asyncFn()
+    .then(resolve)
+    .catch((reason) => {
+      if (maxAttempts > 0) {
+        return wait(interval)
+          .then(retryEvery.bind(null, asyncFn, { interval, maxAttempts: maxAttempts - 1 }))
+          .then(resolve)
+          .catch(reject);
+      }
+      return reject(reason);
     });
-};
-
-export const retryEvery = async (asyncFunc, { interval = 500, maxAttempts = 1} = {}) => {
-    try {
-        const asyncFuncResult = await asyncFunc();
-        return asyncFuncResult;
-    } catch (e) {
-        console.log('retrying e', e);
-        let currentAttempt = 1;
-        while (currentAttempt++ <= maxAttempts) {
-            try {
-                console.log('retrying now');
-                const funcResult = await asyncFunc();
-                console.log('funcResult', funcResult);
-            } catch (e) {
-                console.log('caught error', e);
-                console.log('currentAttempt', currentAttempt);
-                if (currentAttempt === maxAttempts) {
-                    console.log('max attempts reached');
-                    throw e;
-                }
-            }
-
-            await delay(interval);
-        }
-    }
-};
+});
