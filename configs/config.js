@@ -12,7 +12,14 @@ const loose = true
 const babelSetup = {
   babelrc: false,
   presets: [['@babel/preset-env', { modules: false, loose }]],
-  plugins: [['@babel/plugin-proposal-class-properties', { loose }]],
+  runtimeHelpers: true,
+  plugins: [
+    ['@babel/plugin-proposal-class-properties', { loose }],
+    ["@babel/plugin-transform-runtime", {
+        "regenerator": true
+      }
+    ]
+  ],
   exclude: 'node_modules/**',
 }
 
