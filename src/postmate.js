@@ -365,7 +365,7 @@ Postmate.Model = class Model {
    * @param {Object} model Hash of values, functions, or promises
    * @return {Promise}       The Promise that resolves when the handshake has been received
    */
-  constructor (model, options) {
+  constructor (model, options = {}) {
     const { retryOptions = {} } = options;
     this.child = window;
     this.model = model;
