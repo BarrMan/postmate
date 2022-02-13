@@ -1,3 +1,4 @@
+import { retryEvery } from './utils';
 
 /**
  * The type of messages our frames our sending
@@ -42,7 +43,11 @@ export const generateNewMessageId = () => ++_messageId
  * Postmate logging function that enables/disables via config
  * @param  {Object} ...args Rest Arguments
  */
-export const log = (...args) => Postmate.debug ? console.log(...args) : null // eslint-disable-line no-console
+export const log = (...args) => {
+  if (process.env.NODE_ENV !== 'production') {
+    Postmate.debug ? console.log(...args) : null // eslint-disable-line no-console
+  }
+};
 
 /**
  * Takes a URL and returns the origin
@@ -107,20 +112,18 @@ export const resolveValue = (model, property) => {
  */
 export class ParentAPI {
   constructor (info) {
-    this.parent = info.parent
-    this.frame = info.frame
-    this.child = info.child
-    this.childOrigin = info.childOrigin
+    this.parent = info.parent;
+    this.frame = info.frame;
+    this.child = info.child;
+    this.childOrigin = info.childOrigin;
 
-    this.events = {}
+    this.events = {};
 
-    if (process.env.NODE_ENV !== 'production') {
-      log('Parent: Registering API')
-      log('Parent: Awaiting messages...')
-    }
+    log('Parent: Registering API');
+    log('Parent: Awaiting messages...');
 
     this.listener = (e) => {
-      if (!sanitize(e, this.childOrigin)) return false
+      if (!sanitize(e, this.childOrigin)) return false;
 
       /**
        * the assignments below ensures that e, data, and value are all defined
@@ -128,21 +131,19 @@ export class ParentAPI {
       const { data, name } = (((e || {}).data || {}).value || {})
 
       if (e.data.postmate === 'emit') {
-        if (process.env.NODE_ENV !== 'production') {
-          log(`Parent: Received event emission: ${name}`)
-        }
+        log(`Parent: Received event emission: ${name}`);
+
         if (name in this.events) {
           this.events[name].forEach(callback => {
-            callback.call(this, data)
+            callback.call(this, data);
           })
         }
       }
     }
 
-    this.parent.addEventListener('message', this.listener, false)
-    if (process.env.NODE_ENV !== 'production') {
-      log('Parent: Awaiting event emissions from Child')
-    }
+    this.parent.addEventListener('message', this.listener, false);
+
+    log('Parent: Awaiting event emissions from Child');
   }
 
   get (property) {
@@ -187,9 +188,8 @@ export class ParentAPI {
   }
 
   destroy () {
-    if (process.env.NODE_ENV !== 'production') {
-      log('Parent: Destroying Postmate instance')
-    }
+    log('Parent: Destroying Postmate instance')
+
     window.removeEventListener('message', this.listener, false)
     this.frame.parentNode.removeChild(this.frame)
   }
@@ -206,17 +206,13 @@ export class ChildAPI {
     this.parentOrigin = info.parentOrigin
     this.child = info.child
 
-    if (process.env.NODE_ENV !== 'production') {
-      log('Child: Registering API')
-      log('Child: Awaiting messages...')
-    }
+    log('Child: Registering API')
+    log('Child: Awaiting messages...')
 
     this.child.addEventListener('message', (e) => {
       if (!sanitize(e, this.parentOrigin)) return
 
-      if (process.env.NODE_ENV !== 'production') {
-        log('Child: Received request', e.data)
-      }
+      log('Child: Received request', e.data)
 
       const { property, uid, data } = e.data
 
@@ -240,9 +236,8 @@ export class ChildAPI {
   }
 
   emit (name, data) {
-    if (process.env.NODE_ENV !== 'production') {
-      log(`Child: Emitting Event "${name}"`, data)
-    }
+    log(`Child: Emitting Event "${name}"`, data)
+
     this.parent.postMessage({
       postmate: 'emit',
       type: messageType,
@@ -281,7 +276,7 @@ class Postmate {
     url,
     name,
     classListArray = [],
-    handshakeConfig = defaultHandshakeConfig
+    options,
   }) { // eslint-disable-line no-undef
     this.parent = window
     this.frame = document.createElement('iframe')
@@ -290,10 +285,11 @@ class Postmate {
     container.appendChild(this.frame)
     this.child = this.frame.contentWindow || this.frame.contentDocument.parentWindow
     this.model = model || {}
+    const { handshakeConfig, retryOptions } = options;
     this.maxHandshakeRequests = maxHandshakeRequests;
     this.handshakeConfig = Object.assign({}, defaultHandshakeConfig, handshakeConfig);
 
-    return this.sendHandshake(url)
+    return retryEvery(() => this.sendHandshake(url), retryOptions);
   }
 
   /**
@@ -310,14 +306,14 @@ class Postmate {
         if (!sanitize(e, childOrigin)) return false
         if (e.data.postmate === 'handshake-reply') {
           clearInterval(responseInterval)
-          if (process.env.NODE_ENV !== 'production') {
-            log('Parent: Received handshake reply from Child')
-          }
+
+          log('Parent: Received handshake reply from Child')
+
           this.parent.removeEventListener('message', reply, false)
           this.childOrigin = e.origin
-          if (process.env.NODE_ENV !== 'production') {
-            log('Parent: Saving Child origin', this.childOrigin)
-          }
+
+          log('Parent: Saving Child origin', this.childOrigin)
+
           return resolve(new ParentAPI(this))
         }
       }
@@ -326,9 +322,9 @@ class Postmate {
 
       const doSend = () => {
         attempt++
-        if (process.env.NODE_ENV !== 'production') {
-          log(`Parent: Sending handshake attempt ${attempt}`, { childOrigin })
-        }
+
+        log(`Parent: Sending handshake attempt ${attempt}`, { childOrigin })
+
         this.child.postMessage({
           postmate: 'handshake',
           type: messageType,
@@ -352,9 +348,8 @@ class Postmate {
         this.frame.addEventListener('load', loaded)
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        log('Parent: Loading frame', { url })
-      }
+      log('Parent: Loading frame', { url })
+
       this.frame.src = url
     })
   }
@@ -370,31 +365,33 @@ Postmate.Model = class Model {
    * @param {Object} model Hash of values, functions, or promises
    * @return {Promise}       The Promise that resolves when the handshake has been received
    */
-  constructor (model) {
-    this.child = window
-    this.model = model
-    this.parent = this.child.parent
-    return this.sendHandshakeReply()
+  constructor (model, options) {
+    const { retryOptions = {} } = options;
+    this.child = window;
+    this.model = model;
+    this.parent = this.child.parent;
+
+    return this.sendHandshakeReply(retryOptions);
   }
 
   /**
    * Responds to a handshake initiated by the Parent
    * @return {Promise} Resolves an object that exposes an API for the Child
    */
-  sendHandshakeReply () {
+  sendHandshakeReply (retryOptions) {
     return new Postmate.Promise((resolve, reject) => {
       const shake = (e) => {
         if (!e.data.postmate) {
-          return
+          return;
         }
         if (e.data.postmate === 'handshake') {
-          if (process.env.NODE_ENV !== 'production') {
-            log('Child: Received handshake from Parent')
-          }
+
+          log('Child: Received handshake from Parent')
+
           this.child.removeEventListener('message', shake, false)
-          if (process.env.NODE_ENV !== 'production') {
-            log('Child: Sending handshake reply to Parent')
-          }
+
+          log('Child: Sending handshake reply to Parent')
+
           e.source.postMessage({
             postmate: 'handshake-reply',
             type: messageType,
@@ -406,20 +403,20 @@ Postmate.Model = class Model {
           if (defaults) {
             Object.keys(defaults).forEach(key => {
               this.model[key] = defaults[key]
-            })
-            if (process.env.NODE_ENV !== 'production') {
-              log('Child: Inherited and extended model from Parent')
-            }
+            });
+
+            log('Child: Inherited and extended model from Parent');
           }
 
-          if (process.env.NODE_ENV !== 'production') {
-            log('Child: Saving Parent origin', this.parentOrigin)
-          }
-          return resolve(new ChildAPI(this))
+          log('Child: Saving Parent origin', this.parentOrigin);
+
+          return resolve(new ChildAPI(this));
         }
         return reject('Handshake Reply Failed')
       }
-      this.child.addEventListener('message', shake, false)
+      this.child.addEventListener('message', (e) => {
+        retryEvery(() => shake(e), retryOptions)
+      }, false);
     })
   }
 }
