@@ -1,3 +1,9 @@
+export const delay = function(delayMs) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, delayMs);
+    });
+};
+
 export const retryEvery = async (asyncFunc, { interval = 500, maxAttempts = 1} = {}) => {
     try {
         const asyncFuncResult = await asyncFunc();
@@ -19,7 +25,7 @@ export const retryEvery = async (asyncFunc, { interval = 500, maxAttempts = 1} =
                 }
             }
 
-            await this.delay(interval);
+            await delay(interval);
         }
     }
 };
