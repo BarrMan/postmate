@@ -1,5 +1,5 @@
 {
-  "name": "postmate",
+  "name": "@barrman/postmate",
   "version": "1.7.0",
   "description": "A powerful, simple, promise-based postMessage library",
   "main": "build/postmate.js",
@@ -71,7 +71,7 @@
     "pci",
     "security"
   ],
-  "author": "Jacob Kelley <jakie8@gmail.com>",
+  "author": "Imri Barr <emree3@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/dollarshaveclub/postmate/issues"

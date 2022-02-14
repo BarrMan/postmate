@@ -1,6 +1,6 @@
 /**
   postmate - A powerful, simple, promise-based postMessage library
-  @version v1.6.0
+  @version v1.7.0
   @link https://github.com/dollarshaveclub/postmate
   @author Jacob Kelley <jakie8@gmail.com>
   @license MIT
@@ -67,14 +67,14 @@
     emit: 1,
     reply: 1,
     request: 1
-    /**
-     * Ensures that a message is safe to interpret
-     * @param  {Object} message The postmate message being sent
-     * @param  {String|Boolean} allowedOrigin The whitelisted origin or false to skip origin check
-     * @return {Boolean}
-     */
-
   };
+  /**
+   * Ensures that a message is safe to interpret
+   * @param  {Object} message The postmate message being sent
+   * @param  {String|Boolean} allowedOrigin The whitelisted origin or false to skip origin check
+   * @return {Boolean}
+   */
+
   var sanitize = function sanitize(message, allowedOrigin) {
     if (typeof allowedOrigin === 'string' && message.origin !== allowedOrigin) return false;
     if (!message.data) return false;
@@ -101,9 +101,7 @@
    * @param {Object} info Information on the consumer
    */
 
-  var ParentAPI =
-  /*#__PURE__*/
-  function () {
+  var ParentAPI = /*#__PURE__*/function () {
     function ParentAPI(info) {
       var _this = this;
 
@@ -212,9 +210,7 @@
    * @param {Object} info Information on the consumer
    */
 
-  var ChildAPI =
-  /*#__PURE__*/
-  function () {
+  var ChildAPI = /*#__PURE__*/function () {
     function ChildAPI(info) {
       var _this3 = this;
 
@@ -285,9 +281,7 @@
    * @type {Class}
    */
 
-  var Postmate =
-  /*#__PURE__*/
-  function () {
+  var Postmate = /*#__PURE__*/function () {
     // eslint-disable-line no-undef
     // Internet Explorer craps itself
 
@@ -349,15 +343,7 @@
             }
 
             return resolve(new ParentAPI(_this4));
-          } // Might need to remove since parent might be receiving different messages
-          // from different hosts
-
-
-          {
-            log('Parent: Invalid handshake reply');
           }
-
-          return reject('Failed handshake');
         };
 
         _this4.parent.addEventListener('message', reply, false);
@@ -379,6 +365,7 @@
 
           if (attempt === maxHandshakeRequests) {
             clearInterval(responseInterval);
+            reject('Parent: Max attempts reached');
           }
         };
 
@@ -421,9 +408,7 @@
     }
   }();
 
-  Postmate.Model =
-  /*#__PURE__*/
-  function () {
+  Postmate.Model = /*#__PURE__*/function () {
     /**
      * Initializes the child, model, parent, and responds to the Parents handshake
      * @param {Object} model Hash of values, functions, or promises
